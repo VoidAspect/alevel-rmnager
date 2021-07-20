@@ -18,6 +18,6 @@ public interface ManagedResourceService {
 
     void delete(long id) throws ManagedResourceNotFoundException;
 
-    AllocationResultRecord allocate(long id, int units) throws ManagedResourceNotFoundException;
+    AllocationResultRecord allocate(long id, int units) throws ManagedResourceNotFoundException, RManagerDataLayerException;
 
 }

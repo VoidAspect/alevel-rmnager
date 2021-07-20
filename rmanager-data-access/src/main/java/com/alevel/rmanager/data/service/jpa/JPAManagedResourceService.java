@@ -124,7 +124,7 @@ public class JPAManagedResourceService implements ManagedResourceService {
     }
 
     @Override
-    public AllocationResultRecord allocate(long id, int units) throws ManagedResourceNotFoundException {
+    public AllocationResultRecord allocate(long id, int units) throws ManagedResourceNotFoundException, RManagerDataLayerException {
         if (units == 0) {
             throw new IllegalArgumentException("Can't allocate zero units of a resource");
         }
@@ -140,7 +140,8 @@ public class JPAManagedResourceService implements ManagedResourceService {
                 throw new ManagedResourceNotFoundException(id);
             }
 
-            int newCapacity = entity.getCapacity() - units;
+            int oldCapacity = entity.getCapacity();
+            int newCapacity = oldCapacity - units;
             AllocationResult.Status status;
             String reason;
             if (newCapacity > entity.getTotalCapacity()) {
@@ -148,7 +149,7 @@ public class JPAManagedResourceService implements ManagedResourceService {
                 reason = "Total capacity exceeded. Total = %s, got = %s".formatted(entity.getTotalCapacity(), newCapacity);
             } else if (newCapacity < 0) {
                 status = AllocationResult.Status.REJECTED;
-                reason = "Not enough capacity. Was available = %s, requested = %s".formatted(entity.getCapacity(), units);
+                reason = "Not enough capacity. Was available = %s, requested = %s".formatted(oldCapacity, units);
             } else {
                 status = AllocationResult.Status.ACCEPTED;
                 reason = null;
@@ -158,6 +159,8 @@ public class JPAManagedResourceService implements ManagedResourceService {
             var allocationRequest = new AllocationRequest();
             allocationRequest.setResult(allocationResult);
             allocationRequest.setResource(entity);
+            allocationRequest.setPreviousResourceCapacity(oldCapacity);
+            entity.getAllocationRequests().add(allocationRequest);
 
             jpa.persist(allocationRequest);
 
@@ -166,7 +169,7 @@ public class JPAManagedResourceService implements ManagedResourceService {
             return new AllocationResultRecord(status, reason);
         } catch (RuntimeException e) {
             log.error("Data layer operation failed", e);
-            throw e;
+            throw new RManagerDataLayerException(e);
         }
     }
 

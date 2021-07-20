@@ -22,3 +22,5 @@ create table alloc_requests
     reason                     varchar,
     check (previous_resource_capacity >= 0)
 );
+
+create index alloc_requests_issued_at_idx on alloc_requests(issued_at)

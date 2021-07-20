@@ -58,10 +58,15 @@ public class JPAResourceAllocationRequestService implements ResourceAllocationRe
 
             findByResourceId.setParameter("id", resourceId);
 
+            var resultList = findByResourceId.getResultList();
+
+            log.debug("Found {} requests for resources {}", resultList.size(), resourceId);
+
             transaction.commit();
-            return findByResourceId.getResultList();
+
+            return resultList;
         } catch (RuntimeException e) {
-            log.atError().setCause(e).log("Data layer operation failed");
+            log.error("Data layer operation failed", e);
             transaction.rollback();
             throw e;
         }
