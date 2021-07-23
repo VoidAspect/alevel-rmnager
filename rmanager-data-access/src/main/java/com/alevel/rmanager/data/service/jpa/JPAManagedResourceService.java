@@ -134,33 +134,34 @@ public class JPAManagedResourceService implements ManagedResourceService {
         EntityTransaction transaction = jpa.getTransaction();
         transaction.begin();
         try {
-            ManagedResource entity = jpa.find(ManagedResource.class, id);
-            if (entity == null) {
+            ManagedResource resource = jpa.find(ManagedResource.class, id);
+            if (resource == null) {
                 transaction.rollback();
                 throw new ManagedResourceNotFoundException(id);
             }
 
-            int oldCapacity = entity.getCapacity();
+            int oldCapacity = resource.getCapacity();
             int newCapacity = oldCapacity - units;
             AllocationResult.Status status;
             String reason;
-            if (newCapacity > entity.getTotalCapacity()) {
+            if (newCapacity > resource.getTotalCapacity()) {
                 status = AllocationResult.Status.REJECTED;
-                reason = "Total capacity exceeded. Total = %s, got = %s".formatted(entity.getTotalCapacity(), newCapacity);
+                reason = "Total capacity exceeded. Total = %s, got = %s".formatted(resource.getTotalCapacity(), newCapacity);
             } else if (newCapacity < 0) {
                 status = AllocationResult.Status.REJECTED;
                 reason = "Not enough capacity. Was available = %s, requested = %s".formatted(oldCapacity, units);
             } else {
                 status = AllocationResult.Status.ACCEPTED;
                 reason = null;
-                entity.setCapacity(newCapacity);
+                resource.setCapacity(newCapacity);
             }
             var allocationResult = new AllocationResult(status, reason);
             var allocationRequest = new AllocationRequest();
             allocationRequest.setResult(allocationResult);
-            allocationRequest.setResource(entity);
+            allocationRequest.setResource(resource);
             allocationRequest.setPreviousResourceCapacity(oldCapacity);
-            entity.getAllocationRequests().add(allocationRequest);
+            allocationRequest.setCapacity(units);
+            resource.getAllocationRequests().add(allocationRequest);
 
             jpa.persist(allocationRequest);
 

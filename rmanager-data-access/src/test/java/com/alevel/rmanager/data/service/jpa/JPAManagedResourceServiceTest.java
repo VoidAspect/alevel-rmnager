@@ -5,6 +5,7 @@ import com.alevel.rmanager.data.model.dto.AllocationResultRecord;
 import com.alevel.rmanager.data.model.dto.ManagedResourceRecord;
 import com.alevel.rmanager.data.model.dto.SaveManagedResourceRequest;
 import com.alevel.rmanager.data.model.entity.AllocationResult;
+import com.alevel.rmanager.data.model.entity.ManagedResource;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -126,6 +127,35 @@ class JPAManagedResourceServiceTest extends JPATest {
                         10,
                         update.totalCapacity()),
                 updated.get());
+    }
+
+    @Test
+    @DisplayName("when resource is present - should be able to delete it by id")
+    void testDeleteResource() {
+        assertThrows(ManagedResourceNotFoundException.class, () -> subject.delete(-1));
+
+        long id = assertDoesNotThrow(() -> subject.save(new SaveManagedResourceRequest(
+                "testDelete",
+                null,
+                10))).id();
+
+        assertDoesNotThrow(() -> subject.allocate(id, 5));
+
+        assertTrue(session.createQuery("select ar from AllocationRequest ar where ar.resource.id = :id")
+                .setParameter("id", id)
+                .getResultList().stream()
+                .findAny().isPresent());
+
+        assertDoesNotThrow(() -> subject.delete(id));
+
+        Optional<ManagedResourceRecord> byId = subject.getById(id);
+
+        assertEquals(Optional.empty(), byId);
+        assertNull(session.find(ManagedResource.class, id));
+        assertTrue(session.createQuery("select ar from AllocationRequest ar where ar.resource.id = :id")
+                .setParameter("id", id)
+                .getResultList().stream()
+                .findAny().isEmpty());
     }
 
     @Test

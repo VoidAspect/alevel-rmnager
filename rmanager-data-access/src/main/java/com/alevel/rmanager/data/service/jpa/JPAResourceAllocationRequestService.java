@@ -53,7 +53,7 @@ public class JPAResourceAllocationRequestService implements ResourceAllocationRe
                         ar.issuedAt,
                         ar.result.status,
                         ar.result.reason
-                    ) from AllocationRequest ar where ar.resource.id = :id
+                    ) from AllocationRequest ar where ar.resource.id = :id order by ar.issuedAt desc
                     """, AllocationRequestRecord.class);
 
             findByResourceId.setParameter("id", resourceId);
