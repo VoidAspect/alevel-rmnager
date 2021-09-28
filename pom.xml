@@ -17,7 +17,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit-jupiter.version>5.7.2</junit-jupiter.version>
         <maven-test-plugins.version>3.0.0-M5</maven-test-plugins.version>
-        <java.version>16</java.version>
+        <java.version>17</java.version>
     </properties>
 
     <build>
